@@ -67,7 +67,7 @@ contract Strategy is BaseStrategy, ICallee {
     address public constant weth = address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
 
     //Operating variables
-    uint256 public collateralTarget = 0.78 ether; // 78%
+    uint256 public collateralTarget = 0.77 ether; // 77%
     uint256 public blocksToLiquidationDangerZone = 46500; // 7 days =  60*60*24*7/13
 
     uint256 public minWant = 0; //Only lend if we have enough want to be worth it. Can be set to non-zero
