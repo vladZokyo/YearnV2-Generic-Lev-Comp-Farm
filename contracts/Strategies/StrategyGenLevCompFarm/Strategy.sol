@@ -549,7 +549,7 @@ contract Strategy is BaseStrategy {
         (uint256 deposits, uint256 borrows) = getCurrentPosition();
 
         uint256 position = deposits.sub(borrows);
-        emit Debug(position);
+        
         //we want to revert if we can't liquidateall
         if(!forceMigrate){
             require(position < minWant, "DELEVERAGE FIRST");
