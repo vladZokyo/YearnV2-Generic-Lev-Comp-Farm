@@ -25,86 +25,86 @@ def test_sweep(web3, strategy, weth, ceth, gov, comp):
     strategy.sweep(cbat, {"from": gov})
 
 
-def test_apr_weth(
-    web3, chain, comp, vault, enormousrunningstrategy, whale, gov, weth, strategist
-):
+# def test_apr_weth(
+#     web3, chain, comp, vault, enormousrunningstrategy, whale, gov, weth, strategist
+# ):
     
-    enormousrunningstrategy.setProfitFactor(1, {"from": gov})
-    #assert enormousrunningstrategy.profitFactor() == 1
-    vault.setManagementFee(0, {"from": gov}) # set management fee to 0 so that time works
+#     enormousrunningstrategy.setProfitFactor(1, {"from": gov})
+#     #assert enormousrunningstrategy.profitFactor() == 1
+#     vault.setManagementFee(0, {"from": gov}) # set management fee to 0 so that time works
     
 
-    enormousrunningstrategy.setMinCompToSell(1, {"from": gov})
-    #enormousrunningstrategy.setMinWant(0, {"from": gov})
-    #assert enormousrunningstrategy.minCompToSell() == 1
-    enormousrunningstrategy.harvest({"from": gov})
-    chain.sleep(21600)
+#     enormousrunningstrategy.setMinCompToSell(1, {"from": gov})
+#     #enormousrunningstrategy.setMinWant(0, {"from": gov})
+#     #assert enormousrunningstrategy.minCompToSell() == 1
+#     enormousrunningstrategy.harvest({"from": gov})
+#     chain.sleep(21600)
 
-    print("mgm fee: ", vault.managementFee())
-    print("perf fee: ", vault.performanceFee())
+#     print("mgm fee: ", vault.managementFee())
+#     print("perf fee: ", vault.performanceFee())
 
-    startingBalance = vault.totalAssets()
+#     startingBalance = vault.totalAssets()
 
-    stateOfStrat(enormousrunningstrategy, weth, comp)
-    stateOfVault(vault, enormousrunningstrategy)
+#     stateOfStrat(enormousrunningstrategy, weth, comp)
+#     stateOfVault(vault, enormousrunningstrategy)
 
-    for i in range(2):
+#     for i in range(2):
 
-        waitBlock = 25
-        print(f"\n----wait {waitBlock} blocks----")
-        #wait(waitBlock, chain)
-        chain.mine(waitBlock)
-        ppsBefore = vault.pricePerShare()
+#         waitBlock = 25
+#         print(f"\n----wait {waitBlock} blocks----")
+#         #wait(waitBlock, chain)
+#         chain.mine(waitBlock)
+#         ppsBefore = vault.pricePerShare()
         
 
-        tx = enormousrunningstrategy.harvest({'from': gov})
-        print(tx.events['StrategyReported'])
-        #wait 6 hours. shouldnt mess up next round as compound uses blocks
-        print("Locked: ", vault.lockedProfit())
-        #assert vault.lockedProfit() > 0 # some profit should be unlocked
-        chain.sleep(21600)
-        chain.mine(1)
+#         tx = enormousrunningstrategy.harvest({'from': gov})
+#         print(tx.events['StrategyReported'])
+#         #wait 6 hours. shouldnt mess up next round as compound uses blocks
+#         print("Locked: ", vault.lockedProfit())
+#         #assert vault.lockedProfit() > 0 # some profit should be unlocked
+#         chain.sleep(21600)
+#         chain.mine(1)
         
-        ppsAfter = vault.pricePerShare()
+#         ppsAfter = vault.pricePerShare()
         
-        print("balance: ", enormousrunningstrategy.balance())
-        stateOfStrat(enormousrunningstrategy, weth, comp)
-        # stateOfVault(vault, enormousrunningstrategy)
+#         print("balance: ", enormousrunningstrategy.balance())
+#         stateOfStrat(enormousrunningstrategy, weth, comp)
+#         # stateOfVault(vault, enormousrunningstrategy)
 
-        profit = (vault.totalAssets() - startingBalance).to("ether")
-        strState = vault.strategies(enormousrunningstrategy)
-        totalReturns = strState.dict()['totalGain']
-        totaleth = totalReturns.to("ether")
-        print(f"Real Profit: {profit:.5f}")
-        difff = profit - totaleth
-        print(f"Diff: {difff}")
-        print(f"PPS: {ppsAfter}")
+#         profit = (vault.totalAssets() - startingBalance).to("ether")
+#         strState = vault.strategies(enormousrunningstrategy)
+#         totalReturns = strState.dict()['totalGain']
+#         totaleth = totalReturns.to("ether")
+#         print(f"Real Profit: {profit:.5f}")
+#         difff = profit - totaleth
+#         print(f"Diff: {difff}")
+#         print(f"PPS: {ppsAfter}")
 
-        print(f"PPS Diff: {ppsAfter - ppsBefore}")
-        assert ppsAfter - ppsBefore > 0 # pps should have risen
+#         print(f"PPS Diff: {ppsAfter - ppsBefore}")
+#         assert ppsAfter - ppsBefore > 0 # pps should have risen
 
-        blocks_per_year = 2_300_000
-        assert startingBalance != 0
-        time = (i + 1) * waitBlock
-        assert time != 0
-        ppsProfit = (ppsAfter - ppsBefore) / 1e18 / waitBlock * blocks_per_year
-        apr = (totalReturns / startingBalance) * (blocks_per_year / time)
-        print(f"implied apr assets: {apr:.8%}")
-        print(f"implied apr pps: {ppsProfit:.8%}")
-    vault.withdraw(vault.balanceOf(whale), {"from": whale})
-    print(vault.balanceOf(whale))
-    stateOfStrat(enormousrunningstrategy, weth, comp)
-    stateOfVault(vault, enormousrunningstrategy)
+#         blocks_per_year = 2_300_000
+#         assert startingBalance != 0
+#         time = (i + 1) * waitBlock
+#         assert time != 0
+#         ppsProfit = (ppsAfter - ppsBefore) / 1e18 / waitBlock * blocks_per_year
+#         apr = (totalReturns / startingBalance) * (blocks_per_year / time)
+#         print(f"implied apr assets: {apr:.8%}")
+#         print(f"implied apr pps: {ppsProfit:.8%}")
+#     vault.withdraw(vault.balanceOf(whale), {"from": whale})
+#     print(vault.balanceOf(whale))
+#     stateOfStrat(enormousrunningstrategy, weth, comp)
+#     stateOfVault(vault, enormousrunningstrategy)
 
 
 def test_getting_too_close_to_liq(
-    web3, chain, cdai, comp, vault, largerunningstrategy, whale, gov, dai
+    web3, chain, ceth, comp, vault, largerunningstrategy, whale, gov, weth
 ):
 
-    stateOfStrat(largerunningstrategy, dai, comp)
+    stateOfStrat(largerunningstrategy, weth, comp)
     stateOfVault(vault, largerunningstrategy)
-    largerunningstrategy.setCollateralTarget(Wei("0.7498 ether"), {"from": gov})
-    deposit(Wei("1000 ether"), whale, dai, vault)
+    largerunningstrategy.setCollateralTarget(Wei("0.7998 ether"), {"from": gov})
+    deposit(Wei("1000 ether"), whale, weth, vault)
 
     balanceBefore = vault.totalAssets()
     collat = 0
@@ -115,14 +115,14 @@ def test_getting_too_close_to_liq(
     collat = borrows / deposits
     print(collat)
 
-    stateOfStrat(largerunningstrategy, dai, comp)
+    stateOfStrat(largerunningstrategy, weth, comp)
     stateOfVault(vault, largerunningstrategy)
     assertCollateralRatio(largerunningstrategy)
 
     lastCol = collat
 
     while largerunningstrategy.tendTrigger(1e18) == False:
-        cdai.mint(0, {"from": gov})
+        ceth.mint(0, {"from": gov})
         waitBlock = 100
         wait(waitBlock, chain)
         deposits, borrows = largerunningstrategy.getCurrentPosition()
@@ -134,16 +134,16 @@ def test_getting_too_close_to_liq(
 
     largerunningstrategy.tend({"from": gov})
 
-    largerunningstrategy.setCollateralTarget(Wei("0.73 ether"), {"from": gov})
+    largerunningstrategy.setCollateralTarget(Wei("0.77 ether"), {"from": gov})
     assert largerunningstrategy.tendTrigger(1e18) == False
     largerunningstrategy.tend({"from": gov})
     assertCollateralRatio(largerunningstrategy)
-    stateOfStrat(largerunningstrategy, dai, comp)
+    stateOfStrat(largerunningstrategy, weth, comp)
     stateOfVault(vault, largerunningstrategy)
 
 
 def test_harvest_trigger(
-    web3, chain, comp, vault, largerunningstrategy, whale, gov, dai
+    web3, chain, comp, vault, largerunningstrategy, whale, gov, weth
 ):
     largerunningstrategy.setMinCompToSell(Wei("0.01 ether"), {"from": gov})
 
@@ -157,7 +157,7 @@ def test_harvest_trigger(
     largerunningstrategy.harvest({"from": gov})
 
     assert largerunningstrategy.harvestTrigger(Wei("0.0002 ether")) == False
-    deposit(Wei("100 ether"), whale, dai, vault)
+    deposit(Wei("100 ether"), whale, weth, vault)
     assert largerunningstrategy.harvestTrigger(Wei("0.0002 ether")) == True
     assert largerunningstrategy.harvestTrigger(Wei("0.006 ether")) == False
 
