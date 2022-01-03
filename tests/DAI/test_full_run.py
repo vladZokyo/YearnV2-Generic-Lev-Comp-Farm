@@ -1,5 +1,5 @@
 from itertools import count
-from brownie import Wei, reverts
+from brownie import Wei, reverts, chain
 from useful_methods import (
     genericStateOfStrat,
     withdraw,
@@ -9,12 +9,13 @@ from useful_methods import (
     tend,
     sleep,
     harvest,
+    wait
 )
 import random
 import brownie
 
 
-def test_full_generic(Strategy, web3, chain, cdai, Vault, dai, whale, strategist, helpers):
+def test_full_generic(Strategy, FlashLoanPlugin, web3, chain, cdai, Vault, dai, whale, strategist):
     # our humble strategist is going to publish both the vault and the strategy
     currency = dai
     # deploy vault
@@ -27,10 +28,17 @@ def test_full_generic(Strategy, web3, chain, cdai, Vault, dai, whale, strategist
     vault.setDepositLimit(deposit_limit, {"from": strategist})
 
     # deploy strategy
-    strategy = strategist.deploy(Strategy, vault, cdai, helpers)
+    strategy = strategist.deploy(Strategy, vault, cdai)
+    plugin = FlashLoanPlugin.deploy(
+        strategy,
+        cdai,
+        {'from': strategist}
+    )
+    plugin.setSOLO("0x1E0447b19BB6EcFdAe1e4AE1694b0C3659614e4e", {'from': strategist})
+    plugin.updateMarketId({'from': strategist})
+
+    strategy.setFlashLoanPlugin(plugin, {"from": strategist})
     strategy.setMinCompToSell(0.00001 * 1e18, {"from": strategist})
-
-
 
     debt_ratio = 9_500  # 100%
     vault.addStrategy(strategy, debt_ratio, 0, 2**256-1, 1000, {"from": strategist})
@@ -50,6 +58,8 @@ def test_full_generic(Strategy, web3, chain, cdai, Vault, dai, whale, strategist
 
     assert strategy.estimatedTotalAssets() == 0
     assert strategy.harvestTrigger(1e15) == True
+    strategy.harvest({"from": strategist})
+    wait(1, chain)
     strategy.harvest({"from": strategist})
 
     genericStateOfStrat(strategy, currency, vault)

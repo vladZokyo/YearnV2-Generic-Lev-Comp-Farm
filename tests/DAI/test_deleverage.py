@@ -50,7 +50,6 @@ def test_huge_withdrawal(
 ):
     stateOfStrat(enormousrunningstrategy, dai, comp)
     stateOfVault(vault, enormousrunningstrategy)
-    enormousrunningstrategy.setAave(True, {'from': strategist})
     print("\nwhale withdraws")
     vault.withdraw({"from": whale})
     
@@ -59,7 +58,6 @@ def test_huge_withdrawal(
     stateOfVault(vault, enormousrunningstrategy)
 
     enormousrunningstrategy.harvest({"from": gov})
-
 
 def test_enourmous_exit(
     web3, chain, comp, vault, enormousrunningstrategy, whale, gov, dai, strategist
@@ -76,7 +74,7 @@ def test_enourmous_exit(
     # genericStateOfStrat(strategy, currency, vault)
     # genericStateOfVault(vault, currency)
     ## emergency shutdown
-
+    
     enormousrunningstrategy.harvest({"from": gov})
     stateOfStrat(enormousrunningstrategy, dai, comp)
     genericStateOfStrat(enormousrunningstrategy, dai, vault)

@@ -1,33 +1,13 @@
 import pytest
-from brownie import Wei, config
-
-
-#change these fixtures for generic tests
-@pytest.fixture
-def token(interface):
-    #this one is dai:
-    yield interface.ERC20('0x6b175474e89094c44da98b954eedeac495271d0f')
-    #this one is weth:
-    #yield interface.ERC20('0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2')
-@pytest.fixture
-def vault(gov, rewards, guardian, token, pm, Vault):
-
-    vault = gov.deploy(Vault)
-    vault.initialize(token, gov, rewards, "", "", guardian)
-    vault.setDepositLimit(2 ** 256 - 1, {"from": gov})
-
-    yield vault
+from useful_methods import wait
+from brownie import Wei, config, network, chain
 
 @pytest.fixture
 def rewards(gov):
     yield gov  # TODO: Add rewards contract
-@pytest.fixture
-def Vault(pm):
-    yield pm(config["dependencies"][0]).Vault
 
 @pytest.fixture
 def weth(interface):
-  
     yield interface.ERC20('0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2')
 
 @pytest.fixture
@@ -100,7 +80,6 @@ def strategist(accounts, whale, token):
     decimals = token.decimals()
     token.transfer(accounts[1], 100 * (10 ** decimals), {'from': whale})
     yield accounts[1]
-
 
 @pytest.fixture
 def samdev(accounts):
@@ -281,14 +260,9 @@ def whaleU(accounts, history, web3, shared_setup):
     acc = accounts.at('0xf2d373481e1da4a8ca4734b28f5a642d55fda7d3', force=True)
     yield acc
     
-
-
-
 @pytest.fixture
 def rando(accounts):
     yield accounts[9]
-
-
 
 @pytest.fixture()
 def seededvault(vault, dai, rando):
@@ -299,24 +273,76 @@ def seededvault(vault, dai, rando):
     assert token.balanceOf(vault) == amount
     assert vault.totalDebt() == 0  # No connected strategies yet
     yield vault
+
 @pytest.fixture(autouse=True)
 def isolation(fn_isolation):
     pass
 
+@pytest.fixture(scope="function", autouse=True)
+def takeSnapshot():
+    chain.snapshot()
+    yield
+    chain.revert()
+
+@pytest.fixture
+def vault(
+    Vault,
+    gov, 
+    rewards, 
+    guardian, 
+    token):
+    vault = Vault.deploy({'from': guardian})
+    vault.initialize(
+        token,
+        gov,
+        rewards,
+        "",
+        "",
+        {'from': guardian}
+    )
+
+    vault.setDepositLimit(2 ** 256 - 1, {"from": gov})
+    yield vault
+
 @pytest.fixture()
 def strategy(strategist,gov, keeper, vault,  Strategy, cdai):
-    strategy = strategist.deploy(Strategy,vault, cdai)
+    strategy = Strategy.deploy(vault, cdai, {"from": strategist})
     strategy.setKeeper(keeper)
 
-    rate_limit = 1_000_000 *1e18
-    
-    debt_ratio = 9_500 #100%
-    vault.addStrategy(strategy, debt_ratio, rate_limit, 1000, {"from": gov})
-
+    # vault.addStrategy(strategy, debt_ratio, rate_limit, 1000, {"from": gov})
+    vault.addStrategy(
+            strategy, 
+            9_500, 
+            0, 
+            1_000_000 *1e18,
+            50,
+            100,
+            10_000,
+            {"from": gov}
+        )
     yield strategy
 
+@pytest.fixture
+def flash_loan_plugin(
+    FlashLoanPlugin,
+    strategy,
+    cdai,
+    gov
+    ):
+    plugin = FlashLoanPlugin.deploy(
+        strategy,
+        cdai,
+        {'from': gov}
+    )
+    plugin.setSOLO("0x1E0447b19BB6EcFdAe1e4AE1694b0C3659614e4e", {'from': gov})
+    plugin.updateMarketId({'from': gov})
+
+    strategy.setFlashLoanPlugin(plugin, {"from": gov})
+
+    yield plugin
+
 @pytest.fixture()
-def largerunningstrategy(gov, strategy, dai, vault, whale):
+def largerunningstrategy(gov, strategy, flash_loan_plugin, dai, vault, whale):
 
     amount = Wei('499000 ether')
     dai.approve(vault, amount, {'from': whale})
@@ -324,10 +350,11 @@ def largerunningstrategy(gov, strategy, dai, vault, whale):
 
     strategy.harvest({'from': gov})
     
-    #do it again with a smaller amount to replicate being this full for a while
+    # do it again with a smaller amount to replicate being this full for a while
     amount = Wei('1000 ether')
     dai.approve(vault, amount, {'from': whale})
     vault.deposit(amount, {'from': whale})   
+    wait(1, chain)
     strategy.harvest({'from': gov})
     
     yield strategy
@@ -340,7 +367,7 @@ def enormousrunningstrategy(gov, largerunningstrategy, dai, vault, whale):
     collat = 0
 
     while collat < largerunningstrategy.collateralTarget() / 1.001e18:
-        
+        wait(1, chain)
         largerunningstrategy.harvest({'from': gov})
         deposits, borrows = largerunningstrategy.getCurrentPosition()
         collat = borrows / deposits

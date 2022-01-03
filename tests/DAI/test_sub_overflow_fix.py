@@ -17,16 +17,15 @@ def test_deleverage_without_flashloans(
     web3,
     chain,
     comp,
-    vault_usdc,
-    enormousrunningstrategy_usdc,
+    vault,
+    enormousrunningstrategy,
     whale,
     gov,
-    usdc,
     strategist,
+    dai
 ):
-    strategy = enormousrunningstrategy_usdc
-    vault = vault_usdc
-    currency = usdc
+    strategy = enormousrunningstrategy
+    currency = dai
     stateOfStrat(strategy, currency, comp)
     print("s")
     strategy.setDyDx(False, {"from": gov})

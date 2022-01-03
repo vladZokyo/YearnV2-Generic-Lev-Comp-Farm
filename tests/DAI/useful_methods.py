@@ -1,5 +1,5 @@
 from itertools import count
-from brownie import Wei, reverts, network
+from brownie import Wei, network
 import brownie
 import requests
 
@@ -65,7 +65,7 @@ def stateOfStrat(strategy, dai, comp):
     storedCollat = strategy.storedCollateralisation() / 1e18
     print(f"stored collat: {storedCollat:.5%}")
     print(f"leverage: {leverage:.5f}x")
-    assert collat <= 0.75
+    assert collat <= 0.77
     print("Expected Profit:", strategy.expectedReturn() / (10 ** decimals))
     toLiquidation = strategy.getblocksUntilLiquidation()
     print("Weeks to liquidation:", toLiquidation / 44100)

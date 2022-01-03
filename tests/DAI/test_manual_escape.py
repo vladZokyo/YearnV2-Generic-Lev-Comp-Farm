@@ -1,5 +1,5 @@
 from itertools import count
-from brownie import Wei, reverts
+from brownie import Wei, reverts, chain
 from useful_methods import (
     stateOfStrat,
     genericStateOfStrat,
@@ -19,7 +19,7 @@ def test_manual_escape(
     while enormousrunningstrategy.storedCollateralisation() > 1*1e16:
         print(enormousrunningstrategy.storedCollateralisation()/1e18)
         deposits, borrows = enormousrunningstrategy.getCurrentPosition()
-        theolent = borrows/0.745
+        theolent = borrows/0.795
         space = deposits - theolent
         assert space > 0
         enormousrunningstrategy.manualDeleverage(min(space, borrows), {'from': strategist})
@@ -30,6 +30,7 @@ def test_manual_escape(
 
     vault.updateStrategyDebtRatio(enormousrunningstrategy, 0, {'from':gov})
     enormousrunningstrategy.harvest({'from': strategist})
+    wait(1, chain)
     enormousrunningstrategy.harvest({'from': strategist})
     stateOfStrat(enormousrunningstrategy, dai, comp)
     strState = vault.strategies(enormousrunningstrategy)
@@ -42,7 +43,7 @@ def test_escape_migrate(
     while enormousrunningstrategy.storedCollateralisation() > 1*1e16:
         print(enormousrunningstrategy.storedCollateralisation()/1e18)
         deposits, borrows = enormousrunningstrategy.getCurrentPosition()
-        theolent = borrows/0.745
+        theolent = borrows/0.795
         space = deposits - theolent
         assert space > 0
         enormousrunningstrategy.manualDeleverage(min(space, borrows), {'from': strategist})
