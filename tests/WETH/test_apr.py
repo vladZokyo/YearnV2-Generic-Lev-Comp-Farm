@@ -97,50 +97,49 @@ def test_sweep(web3, strategy, weth, ceth, gov, comp):
 #     stateOfVault(vault, enormousrunningstrategy)
 
 
-def test_getting_too_close_to_liq(
-    web3, chain, ceth, comp, vault, largerunningstrategy, whale, gov, weth
-):
+# def test_getting_too_close_to_liq(
+#     web3, chain, ceth, comp, vault, largerunningstrategy, whale, gov, weth
+# ):
 
-    stateOfStrat(largerunningstrategy, weth, comp)
-    stateOfVault(vault, largerunningstrategy)
-    largerunningstrategy.setCollateralTarget(Wei("0.7998 ether"), {"from": gov})
-    deposit(Wei("1000 ether"), whale, weth, vault)
+#     stateOfStrat(largerunningstrategy, weth, comp)
+#     stateOfVault(vault, largerunningstrategy)
+#     largerunningstrategy.setCollateralTarget(Wei("0.7998 ether"), {"from": gov})
+#     deposit(Wei("1000 ether"), whale, weth, vault)
 
-    balanceBefore = vault.totalAssets()
-    collat = 0
-    assert largerunningstrategy.tendTrigger(1e18) == False
+#     balanceBefore = vault.totalAssets()
+#     collat = 0
+#     assert largerunningstrategy.tendTrigger(1e18) == False
 
-    largerunningstrategy.harvest({"from": gov})
-    deposits, borrows = largerunningstrategy.getCurrentPosition()
-    collat = borrows / deposits
-    print(collat)
+#     largerunningstrategy.harvest({"from": gov})
+#     deposits, borrows = largerunningstrategy.getCurrentPosition()
+#     collat = borrows / deposits
+#     print(collat)
 
-    stateOfStrat(largerunningstrategy, weth, comp)
-    stateOfVault(vault, largerunningstrategy)
-    assertCollateralRatio(largerunningstrategy)
+#     stateOfStrat(largerunningstrategy, weth, comp)
+#     stateOfVault(vault, largerunningstrategy)
+#     assertCollateralRatio(largerunningstrategy)
 
-    lastCol = collat
+#     lastCol = collat
 
-    while largerunningstrategy.tendTrigger(1e18) == False:
-        ceth.mint(0, {"from": gov})
-        waitBlock = 100
-        wait(waitBlock, chain)
-        deposits, borrows = largerunningstrategy.getCurrentPosition()
-        collat = borrows / deposits
-        assert collat > lastCol
-        lastCol = collat
-        print("Collat ratio: ", collat)
-        print("Blocks to liq: ", largerunningstrategy.getblocksUntilLiquidation())
+#     while largerunningstrategy.tendTrigger(1e18) == False:
+#         ceth.mint(0, {"from": gov})
+#         waitBlock = 100
+#         wait(waitBlock, chain)
+#         deposits, borrows = largerunningstrategy.getCurrentPosition()
+#         collat = borrows / deposits
+#         assert collat > lastCol
+#         lastCol = collat
+#         print("Collat ratio: ", collat)
+#         print("Blocks to liq: ", largerunningstrategy.getblocksUntilLiquidation())
 
-    largerunningstrategy.tend({"from": gov})
+#     largerunningstrategy.tend({"from": gov})
 
-    largerunningstrategy.setCollateralTarget(Wei("0.77 ether"), {"from": gov})
-    assert largerunningstrategy.tendTrigger(1e18) == False
-    largerunningstrategy.tend({"from": gov})
-    assertCollateralRatio(largerunningstrategy)
-    stateOfStrat(largerunningstrategy, weth, comp)
-    stateOfVault(vault, largerunningstrategy)
-
+#     largerunningstrategy.setCollateralTarget(Wei("0.77 ether"), {"from": gov})
+#     assert largerunningstrategy.tendTrigger(1e18) == False
+#     largerunningstrategy.tend({"from": gov})
+#     assertCollateralRatio(largerunningstrategy)
+#     stateOfStrat(largerunningstrategy, weth, comp)
+#     stateOfVault(vault, largerunningstrategy)
 
 def test_harvest_trigger(
     web3, chain, comp, vault, largerunningstrategy, whale, gov, weth
